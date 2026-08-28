@@ -1,0 +1,96 @@
+enum MovementType {
+    STOCK_IN
+    STOCK_OUT
+    ADJUSTMENT
+}
+
+enum TransferStatus {
+    PENDING
+    COMPLETED
+    CANCELLED
+}
+
+model Inventory {
+    // Inventory information
+    id             String  @id @default(uuid())
+    productId      String
+    warehouseId    String
+    organizationId String
+    createdById    String?
+
+    quantity Int @default(0)
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    deletedAt DateTime?
+
+    // Relationships
+    product            Product             @relation(fields: [productId, organizationId], references: [id, organizationId], onDelete: Cascade)
+    warehouse          WareHouse           @relation(fields: [warehouseId, organizationId], references: [id, organizationId], onDelete: Cascade)
+    inventoryMovements InventoryMovement[]
+    createdBy          User?               @relation(name: "InventoryAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+    transfersOutgoing  InventoryTransfer[] @relation("FromInventory")
+    transfersIncoming  InventoryTransfer[] @relation("ToInventory")
+
+    @@unique([productId, warehouseId, organizationId])
+    @@unique([id, organizationId])
+    @@index([organizationId, warehouseId])
+    @@index([organizationId, productId])
+    @@index([organizationId, createdById])
+}
+
+model InventoryMovement {
+    // Inventory movement information
+    id               String       @id @default(uuid())
+    type             MovementType
+    reason           String?      @db.VarChar(255)
+    organizationId   String
+    ammount          Int
+    previousQuantity Int
+    newQuantity      Int
+    // Timestamps
+    createdAt        DateTime     @default(now())
+    // Relationships
+    inventoryId      String
+    createdById      String?
+    inventory        Inventory    @relation(fields: [inventoryId, organizationId], references: [id, organizationId], onDelete: Cascade)
+    createdBy        User?        @relation(name: "InventoryMovementAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+
+    transerId String?
+    transfer  InventoryTransfer? @relation(fields: [transerId], references: [id], onDelete: SetNull)
+
+    @@index([inventoryId])
+    @@index([inventoryId, createdAt])
+    @@index([organizationId, createdAt])
+    @@index([createdById])
+    @@index([organizationId])
+}
+
+model InventoryTransfer {
+    id                        String              @id @default(uuid())
+    organizationId            String
+    ammount                   Int
+    reason                    String?             @db.VarChar(255)
+    createdAt                 DateTime            @default(now())
+    acceptedAt                DateTime?
+    canceledAt                DateTime?
+    status                    TransferStatus      @default(PENDING)
+    //Relationships
+    acceptedById              String?
+    canceledById              String?
+    createdById               String?
+    toInventoryId             String
+    fromInventoryId           String
+    acceptedBy                User?               @relation(name: "InventoryTransferAcceptedBy", fields: [acceptedById], references: [id], onDelete: SetNull)
+    canceledBy                User?               @relation(name: "InventoryTransferCanceledBy", fields: [canceledById], references: [id], onDelete: SetNull)
+    createdBy                 User?               @relation(name: "InventoryTransferAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+    destinationInventory      Inventory           @relation("ToInventory", fields: [toInventoryId, organizationId], references: [id, organizationId], onDelete: Cascade)
+    sourceInventory           Inventory           @relation("FromInventory", fields: [fromInventoryId, organizationId], references: [id, organizationId], onDelete: Cascade)
+    relatedInventoryMovements InventoryMovement[]
+
+    @@index([organizationId, status])
+    @@index([fromInventoryId])
+    @@index([toInventoryId])
+    @@index([createdById])
+    @@index([createdAt])
+}

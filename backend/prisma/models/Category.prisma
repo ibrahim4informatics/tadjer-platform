@@ -1,0 +1,20 @@
+model Category {
+    // Category information
+    id          String    @id @default(uuid())
+    name        String    @db.VarChar(255)
+    description String?   @db.Text
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+    deletedAt   DateTime?
+
+    organizationId String
+    creatorId      String?
+    // Relationships
+    products       Product[]
+    organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    createdBy      User?         @relation(name: "CategoryAuthor", fields: [creatorId], references: [id], onDelete: SetNull)
+
+    @@unique([name, organizationId])
+    @@unique([id, organizationId])
+    @@index([organizationId, name])
+}

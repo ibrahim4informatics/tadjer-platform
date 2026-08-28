@@ -1,0 +1,28 @@
+enum MembershipRoles {
+    OWNER
+    ADMIN
+    MANAGER
+    STAFF
+}
+
+model UserMembership {
+    // Membership information
+    id             Int             @id @default(autoincrement())
+    userId         String
+    organizationId String
+    role           MembershipRoles @default(STAFF)
+    isActive       Boolean         @default(true)
+    // Timestamps
+    createdAt      DateTime        @default(now())
+    updatedAt      DateTime        @updatedAt
+    deletedAt      DateTime?
+    // Relationships
+    user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, organizationId])
+    @@index([role, organizationId])
+    @@index([role, userId])
+    @@index([organizationId, isActive])
+    @@index([organizationId])
+}

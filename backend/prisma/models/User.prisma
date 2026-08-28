@@ -1,9 +1,49 @@
 model User {
-    id        String   @id @default(uuid())
-    firstName String   @db.VarChar(35)
-    lastName  String   @db.VarChar(35)
-    email     String   @unique @db.VarChar(255)
-    password  String   @db.VarChar(255)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    //User identity
+    id        String  @id @default(uuid())
+    firstName String  @db.VarChar(35)
+    lastName  String  @db.VarChar(35)
+    phone     String? @db.VarChar(15)
+    email     String  @unique @db.VarChar(255)
+    avatarUrl String? @db.VarChar(255)
+
+    //User credentials
+    password        String  @db.VarChar(255)
+    isActive        Boolean @default(true)
+    isEmailVerified Boolean @default(false)
+    lastLogin       DateTime?
+
+    // Timestamps
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+    deletedAt   DateTime?
+    
+    // Relationships
+    memberships UserMembership[]
+    sessions    Session[]
+
+    // Relationships for created entities
+    createdProducts Product[] @relation("ProductAuthor")
+    createdCategories Category[] @relation("CategoryAuthor")
+    createdInventories Inventory[] @relation("InventoryAuthor")
+    createdInventoryMovements InventoryMovement[] @relation("InventoryMovementAuthor")
+    createdInventoryTransfers InventoryTransfer[] @relation("InventoryTransferAuthor")
+    createdWareHouses WareHouse[] @relation("WareHouseAuthor")
+    createdSuppliers Supplier[] @relation("SupplierAuthor")
+
+    // Relationships for accepted and canceled inventory transfers
+    acceptedInventoryTransfers InventoryTransfer[] @relation("InventoryTransferAcceptedBy")
+    canceledInventoryTransfers InventoryTransfer[] @relation("InventoryTransferCanceledBy")
+
+    @@index([firstName, lastName, phone])
+}
+
+model Session {
+    id        Int       @id @default(autoincrement())
+    userId    String
+    tokenHash String    @db.VarChar(255)
+    expiresAt DateTime
+    revokedAt DateTime?
+    createdAt DateTime  @default(now())
+    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

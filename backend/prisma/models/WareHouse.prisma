@@ -1,0 +1,39 @@
+model WareHouse {
+    // Warehouse information
+    id             String             @id @default(uuid())
+    name           String             @db.VarChar(255)
+    location       WareHouseLocation?
+    createdAt      DateTime           @default(now())
+    updatedAt      DateTime           @updatedAt
+    deletedAt      DateTime?
+
+    // Relationships
+    organizationId String
+    createdById    String?
+    organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    inventories  Inventory[]
+    createdBy    User?       @relation(name: "WareHouseAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+
+    @@unique([name, organizationId])
+    @@unique([id, organizationId])
+    @@index([organizationId, name])
+}
+
+model WareHouseLocation {
+    // Warehouse location information
+    id        Int      @id @default(autoincrement())
+    title     String   @db.VarChar(255)
+    address   String   @db.VarChar(255)
+    // Location coordinates
+    latitude  Float
+    longitude Float
+    // Timestamps
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relationships
+    warehouse   WareHouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+    warehouseId String    @unique
+
+    @@index([warehouseId])
+}
