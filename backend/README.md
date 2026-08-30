@@ -25,6 +25,10 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+
+
+
+
 ## Project setup
 
 ```bash
@@ -42,57 +46,58 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
+
+## Consistent Response Interceptor
+
+The backend uses a global `ResponseInterceptor` in `src/main.ts`. By default, every successful controller response is wrapped into this shape:
+
+```json
+{
+  "message": "Request successful",
+  "data": {}
+}
 ```
 
-## Run tests
+The interceptor reads metadata from controller handlers and classes through the `Reflector`, so decorators can change the message or bypass the wrapper completely.
 
-```bash
-# unit tests
-$ npm run test
+### Decorators
 
-# e2e tests
-$ npm run test:e2e
+`ResponseMessage(message)` sets the response message used by the interceptor.
 
-# test coverage
-$ npm run test:cov
+```ts
+@Get()
+@ResponseMessage('Product created successfully')
+create() {
+  return this.productsService.create();
+}
 ```
 
-## Deployment
+`SkipResponseTransform()` skips the wrapper and returns the handler result as-is.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```ts
+@Get('health')
+@SkipResponseTransform()
+healthCheck() {
+  return 'ok';
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+`ApiSuccessResponse(Model, message)` is a Swagger helper for documenting the wrapped response shape in OpenAPI.
 
-## Resources
+```ts
+@Post()
+@ResponseMessage('Product created successfully')
+@ApiSuccessResponse(CreateProductDto, 'Product created successfully')
+create(@Body() body: CreateProductDto) {
+  return this.productsService.create(body);
+}
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### Behavior Summary
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- If no decorator is used, the response becomes `{ success: true, message: 'Request successful', data }`.
+- If `@ResponseMessage()` is present, only the `message` field changes.
+- If `@SkipResponseTransform()` is present, the interceptor does not wrap the response.
+- Use `@ApiSuccessResponse()` when you want Swagger to show the wrapped response schema.
 
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+The current app entry point already registers the interceptor globally, so these decorators work across the API without extra controller setup.
