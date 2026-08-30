@@ -180,7 +180,7 @@ const organization = {
 export default function AppSidebar() {
   const { isMobile, open, openMobile, setOpen, setOpenMobile } = useSidebar();
   return (
-    <Sidebar className="w-75 z-11" variant="sidebar" collapsible={isMobile ? "offcanvas" : "icon"}>
+    <Sidebar  variant="sidebar" collapsible={isMobile ? "offcanvas" : "icon"}>
       {(open || openMobile) && (
         <SidebarHeader>
           <Link to={"/dashboard"}>
