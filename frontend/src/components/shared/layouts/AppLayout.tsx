@@ -81,6 +81,8 @@ const AppLayout = () => {
                 </InputGroupAddon>
               </InputGroup>
 
+              <ModeToggle />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Avatar className="cursor-pointer">
